@@ -1,0 +1,42 @@
+<html lang="ch">
+<head>
+    <title>人脸识别登入</title>
+
+    <script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+
+</head>
+
+<body>
+<div id="mainDiv"></div>
+<canvas id="canvas" width="400" height="400"></canvas>
+<button id="upload">上传</button>
+</body>
+
+<script type="text/javascript">
+    $("#mainDiv").html("nihao")
+    window.onload = function () {
+        var img = new Image();
+        img.src = "/static/img.jpg";
+        // 加载完成图片之后才能够执行canvas的操作
+        img.onload = function () {
+            var canvas = document.querySelector("#canvas");
+            var cxt = canvas.getContext("2d");
+            canvas.width = 293;
+            canvas.height = 220;
+            cxt.drawImage(img, 0, 0, 293, 220);
+        }
+    }
+
+    $("#upload").click(function () {
+        var imgData = document.getElementById("canvas").toDataURL("image/jpg");
+        var data = imgData.substr(22);
+        console.log(data);
+        $.post('../upload/', {'data': data}, function (res) {
+            console.log(res);
+        });
+
+    });
+
+
+</script>
+</html>
