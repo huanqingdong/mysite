@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>摄像头拍照</title>
+</head>
+<body>
+
+<div class="row" style="height: 50px">
+
+</div>
+<div class="row">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        {% comment %} <button id="open" class="btn btn-primary">打开</button>
+        <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
+        <span class="glyphicon glyphicon-log-out" aria-hidden="true"></span>
+       {% endcomment %}
+        <button id="open" type="button" class="btn btn-success ">
+            <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span> 人脸登入
+        </button>
+
+        <button id="stop" type="button" class="btn btn-danger">
+            <span class="glyphicon glyphicon-log-out" aria-hidden="true"></span> 取消登入
+        </button>
+        {% comment %}<button id="stop" class="btn btn-primary">关闭</button>{% endcomment %}
+        <button id="capture" class="btn btn-primary">拍照</button>
+        <button id="upload" class="btn btn-primary">上传</button>
+        <label id="timesLbl"></label>
+    </div>
+    <div class="col-md-4"></div>
+</div>
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-6">
+        <video style="display: none" id="video" width="600" height="400" controls></video>
+    </div>
+    <div class="col-md-3">
+        <canvas id="canvas" width="480" height="320"></canvas>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+
+
+<div style="display: none">
+
+
+</div>
+
+
+<script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="/static/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+
+<link rel="stylesheet" href="/static/toast/bootoast.css">
+<script type="text/javascript" src="/static/toast/bootoast.js"></script>
+
+<script>
+
+    var tryTimes = 0;
+    var tryFlag = true;
+
+
+    //访问用户媒体设备的兼容方法
+    function getUserMedia(constraints, success, error) {
+        if (navigator.mediaDevices.getUserMedia) {
+            //最新的标准API
+            navigator.mediaDevices.getUserMedia(constraints).then(success).catch(error);
+            console.log("--------")
+        } else if (navigator.webkitGetUserMedia) {
+            //webkit核心浏览器
+            navigator.webkitGetUserMedia(constraints, success, error)
+        } else if (navigator.mozGetUserMedia) {
+            //firfox浏览器
+            navigator.mozGetUserMedia(constraints, success, error);
+        } else if (navigator.getUserMedia) {
+            //旧版API
+            navigator.getUserMedia(constraints, success, error);
+        }
+    }
+
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let context = canvas.getContext('2d');
+    var mediaStreamTrack;
+
+    // 摄像头打开成功回调
+    function success(stream) {
+        //兼容webkit核心浏览器
+        let CompatibleURL = window.URL || window.webkitURL;
+        //将视频流设置为video元素的源
+        console.log(stream);
+        mediaStreamTrack = typeof stream.stop === 'function' ? stream : stream.getTracks()[0];
+
+        //video.src = CompatibleURL.createObjectURL(stream);
+        video.srcObject = stream;
+        video.play();
+
+
+        tryFlag = true;
+        tryTimes = 0;
+        capture();
+        upload();
+    }
+
+    function error(error) {
+        console.log(`访问用户媒体设备失败${error.name}, ${error.message}`);
+    }
+
+    function open() {
+        if (navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+            //调用用户媒体设备, 访问摄像头
+            getUserMedia({video: {width: 480, height: 320}}, success, error);
+        } else {
+            alert('不支持访问用户媒体');
+        }
+    }
+
+    function capture() {
+        context.drawImage(video, 0, 0, 480, 320);
+    }
+
+    document.getElementById('capture').addEventListener('click', function () {
+        context.drawImage(video, 0, 0, 480, 320);
+    });
+
+    function stop() {
+        mediaStreamTrack && mediaStreamTrack.stop();
+        $("#video").hide();
+        $("#canvas").hide();
+        tryFlag = false;
+    }
+
+    document.getElementById('stop').addEventListener('click', function () {
+        stop();
+    });
+
+
+    document.getElementById('open').addEventListener('click', function () {
+        $("#video").show();
+        $("#canvas").show();
+        open();
+    });
+
+    function upload() {
+
+        if (!tryFlag) {
+            console.log("exit ");
+            return
+        }
+
+        var imgData = document.getElementById("canvas").toDataURL("image/png");
+        // tobase64
+        var data = imgData.substr(22);
+        $.post('../upload/', {'data': data, 'tryTimes': tryTimes}, function (res) {
+            console.log(res);
+            tryTimes = res.tryTimes;
+            $("#timesLbl").html('尝试登入次数:' + tryTimes);
+            if (res && res.flag && res.flag === 'success') {
+                showSuccess(res.user)
+                stop();
+            } else {
+
+                capture();
+                upload();
+
+            }
+        });
+    }
+
+    document.getElementById('upload').addEventListener('click', function () {
+        upload();
+    });
+
+    document.getElementById('alert').addEventListener('click', function () {
+        alert(1)
+        $('.alert').alert()
+    });
+
+
+    function showSuccess(msg) {
+        bootoast({
+            message: '登入成功,' + msg,
+            type: 'info',
+            position: 'bottom-center',
+            icon: undefined,
+            timeout: 2,
+            animationDuration: 300,
+            dismissable: 200
+        });
+    }
+
+</script>
+</body>
+</html>
