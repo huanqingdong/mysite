@@ -1,0 +1,29 @@
+<html lang="ch">
+<head>
+    <title>人脸识别登入</title>
+
+    <script type="text/javascript" src="/static/jquery-3.4.1.min.js"></script>
+
+</head>
+
+<body>
+<div id="mainDiv"></div>
+<img id="plotImg" width="500" height="500" alt="img missing"/>
+<button id="btnPlot">获取图</button>
+</body>
+
+<script type="text/javascript">
+
+
+    $("#btnPlot").click(function () {
+
+        $.post('../getPlot/', {}, function (res) {
+            document.getElementById('plotImg').src = "data:image/png;base64," + res.image_tag;
+            console.log(res);
+        });
+
+    });
+
+
+</script>
+</html>

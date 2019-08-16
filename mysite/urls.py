@@ -19,8 +19,10 @@ from django.conf.urls import url
 from . import view
 
 urlpatterns = [
-    #path('admin/', admin.site.urls)
+    # path('admin/', admin.site.urls)
     url(r'^$', view.camera),
     path('hello/', view.hello),
+    path('plot/', view.plot),
+    path('getPlot/', view.get_plot),
     path('upload/', view.upload),
 ]
